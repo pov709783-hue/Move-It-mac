@@ -8,5 +8,4 @@ pystray
 Pillow
 pynput
 psutil
-pygetwindow
 pyinstaller
