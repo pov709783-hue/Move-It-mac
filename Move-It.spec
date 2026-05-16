@@ -53,3 +53,11 @@ coll = COLLECT(
     upx_exclude=[],
     name='Move-It',
 )
+
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        coll,
+        name='Move-It.app',
+        icon=None,
+        bundle_identifier='com.moveit.app',
+    )
