@@ -1,0 +1,12 @@
+opencv-python
+mediapipe
+numpy
+flask
+flask-sock
+pywebview
+pystray
+Pillow
+pynput
+psutil
+pygetwindow
+pyinstaller

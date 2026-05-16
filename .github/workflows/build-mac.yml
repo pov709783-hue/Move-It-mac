@@ -1,0 +1,47 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: 
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install System Dependencies
+      run: |
+        brew install ffmpeg
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller Move-It.spec --clean --noconfirm
+
+    - name: Create DMG
+      run: |
+        # Use a simpler way to zip the app if DMG creation fails, 
+        # but let's try to create a basic DMG using hdiutil (native to mac)
+        mkdir -p dist/dmg
+        cp -R dist/Move-It.app dist/dmg/
+        hdiutil create -volname "Move-It" -srcfolder dist/dmg -ov -format UDZO dist/Move-It-macOS.dmg
+
+    - name: Upload DMG Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Move-It-macOS-Build
+        path: dist/Move-It-macOS.dmg
