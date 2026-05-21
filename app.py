@@ -3,6 +3,8 @@ import mediapipe as mp
 import json
 import urllib.request
 import urllib.error
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 import numpy as np
 import math
 import threading
@@ -2286,4 +2288,7 @@ if __name__ == '__main__':
         return False
         
     window.events.closing += on_closing
-    webview.start(private_mode=False, gui='edgechromium')
+    if sys.platform == 'win32':
+        webview.start(private_mode=False, gui='edgechromium')
+    else:
+        webview.start(private_mode=False)

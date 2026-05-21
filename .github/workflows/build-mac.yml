@@ -40,6 +40,7 @@ jobs:
         # but let's try to create a basic DMG using hdiutil (native to mac)
         mkdir -p dist/dmg
         cp -R dist/Move-It.app dist/dmg/
+        ln -s /Applications dist/dmg/Applications
         hdiutil create -volname "Move-It" -srcfolder dist/dmg -ov -format UDZO dist/Move-It-macOS.dmg
 
     - name: Upload DMG Artifact
