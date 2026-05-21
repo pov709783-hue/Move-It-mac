@@ -58,7 +58,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='Move-It.app',
-        icon=None,
+        icon='icon.ico',
         bundle_identifier='com.moveit.app',
         info_plist={
             'NSCameraUsageDescription': 'Move-It requires camera access to track your dance movements.',

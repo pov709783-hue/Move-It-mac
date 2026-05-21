@@ -2308,7 +2308,13 @@ def on_toggle_meeting_mode(icon, item):
 
 
 
+
 if __name__ == '__main__':
+    # If launched with --tray flag, only run the system tray icon (macOS subprocess)
+    if '--tray' in sys.argv:
+        run_mac_tray_process()
+        sys.exit(0)
+
     # Run benchmark in background
     threading.Thread(target=start_server, daemon=True).start()
     threading.Thread(target=tracking_daemon, daemon=True).start()
@@ -2332,4 +2338,4 @@ if __name__ == '__main__':
     if sys.platform == 'win32':
         webview.start(private_mode=False, gui='edgechromium')
     else:
-        webview.start(private_mode=False)
+        webview.start(private_mode=False)
