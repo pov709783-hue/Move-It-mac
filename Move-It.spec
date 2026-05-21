@@ -63,6 +63,10 @@ if sys.platform == 'darwin':
         info_plist={
             'NSCameraUsageDescription': 'Move-It requires camera access to track your dance movements.',
             'NSMicrophoneUsageDescription': 'Move-It requires microphone access for audio functionality.',
-            'NSHighResolutionCapable': 'True'
+            'NSHighResolutionCapable': 'True',
+            'NSAppTransportSecurity': {
+                'NSAllowsLocalNetworking': True,
+                'NSAllowsArbitraryLoads': True,
+            },
         },
     )
