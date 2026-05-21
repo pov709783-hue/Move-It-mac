@@ -2222,7 +2222,7 @@ def serve_static(filename):
     return response
 
 def start_server():
-    app.run(host='localhost', port=5000, debug=False, use_reloader=False)
+    app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
 
 def create_tray_image():
     # Simple icon: green square with white dot
@@ -2280,7 +2280,7 @@ if __name__ == '__main__':
 
     print("Move-It launching...")
     # Show the dashboard on launch. It hides to tray when user clicks "Start Tracking" or the X button.
-    window = webview.create_window('Move-It', 'http://localhost:5000', width=600, height=700, resizable=True)
+    window = webview.create_window('Move-It', 'http://127.0.0.1:5000', width=600, height=700, resizable=True)
     
     def on_closing():
         if window:
