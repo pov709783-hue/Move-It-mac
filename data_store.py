@@ -4,8 +4,10 @@ import time
 from datetime import datetime, timedelta
 import sys
 
-# Get permanent application data directory
-app_data_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Move-It')
+if sys.platform == 'darwin':
+    app_data_dir = os.path.join(os.path.expanduser('~'), 'Library', 'Application Support', 'Move-It')
+else:
+    app_data_dir = os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'Move-It')
 os.makedirs(app_data_dir, exist_ok=True)
 DB_PATH = os.path.join(app_data_dir, "move_it_data.db")
 
