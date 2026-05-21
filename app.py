@@ -1820,7 +1820,7 @@ def get_logs():
 
 # Static Files
 @app.route('/')
-def index(): return send_from_directory('ui', 'index.html')
+def index(): return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/video_feed')
 def video_feed(): return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -2217,7 +2217,7 @@ def serve_mp_wasm(filename):
 # Static Files Catch-All MUST be last
 @app.route('/<path:filename>')
 def serve_static(filename):
-    response = send_from_directory('ui', filename, max_age=0)
+    response = send_from_directory(app.static_folder, filename, max_age=0)
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return response
 
