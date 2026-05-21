@@ -494,7 +494,10 @@ def tracking_daemon():
 
             if not mouse_active and not (is_dancing or is_stretching) and not is_away:
                 if bg_cap is None:
-                    bg_cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    if sys.platform == 'win32':
+                        bg_cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+                    else:
+                        bg_cap = cv2.VideoCapture(0)
                     bg_cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                     bg_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
                     bg_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
@@ -1138,7 +1141,7 @@ def api_start_tracking():
     
     print(f"Tracking started. Limit set to {current_limit_seconds} seconds.")
     if window:
-        window.hide()  # Hide instead of minimize since we use system tray
+        window.minimize()  # Hide instead of minimize since we use system tray
     return jsonify({"status": "ok"})
 
 @app.route('/api/update_limit', methods=['POST'])
@@ -1197,7 +1200,7 @@ def api_skip():
     is_locked = False
     is_tracking = True
     if window:
-        window.hide()
+        window.minimize()
     return jsonify({"status": "ok", "new_limit": current_limit_seconds})
 
 @app.route('/api/songs', methods=['GET'])
@@ -1371,7 +1374,7 @@ def api_hide():
     global window
     print("Hide requested. Hiding window to system tray.")
     if window:
-        window.hide()
+        window.minimize()
     return jsonify({"status": "ok"})
 
 # =============================================================================
@@ -2308,7 +2311,7 @@ if __name__ == '__main__':
     
     def on_closing():
         if window:
-            window.hide()
+            window.minimize()
         return False
         
     window.events.closing += on_closing
