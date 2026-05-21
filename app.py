@@ -2250,30 +2250,11 @@ def on_open_dashboard(icon, item):
         window.show()
         window.restore()
 
-def run_mac_tray_process():
-    import urllib.request
-    def on_action(icon, item):
-        action = item.text.lower().replace(' ', '_')
-        try: urllib.request.urlopen(f"http://127.0.0.1:5000/api/tray/{action}")
-        except: pass
-        if action == "quit": icon.stop()
-    
-    icon = pystray.Icon("Move-It")
-    icon.menu = pystray.Menu(
-        pystray.MenuItem("Open Dashboard", on_action),
-        pystray.MenuItem("Toggle Meeting Mode", on_action),
-        pystray.MenuItem("Pause Tracking", on_action),
-        pystray.MenuItem("Quit", on_action)
-    )
-    icon.icon = create_tray_image()
-    icon.title = "Move-It Tracker"
-    icon.run()
 
 def setup_tray():
     if sys.platform == 'darwin':
-        import subprocess
-        subprocess.Popen([sys.executable, '--tray'])
-        return
+        return  # pystray conflicts with pywebview on macOS; users use the Dock instead
+
 
     global icon
     icon = pystray.Icon("Move-It")
@@ -2310,10 +2291,6 @@ def on_toggle_meeting_mode(icon, item):
 
 
 if __name__ == '__main__':
-    # If launched with --tray flag, only run the system tray icon (macOS subprocess)
-    if '--tray' in sys.argv:
-        run_mac_tray_process()
-        sys.exit(0)
 
     # Run benchmark in background
     threading.Thread(target=start_server, daemon=True).start()
