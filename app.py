@@ -1817,6 +1817,20 @@ def get_logs():
     except Exception as e:
         return jsonify({"logs": f"Error reading logs: {e}"})
 
+@app.route('/api/tray/<action>')
+def api_tray_action(action):
+    global is_tracking, manual_meeting_mode
+    if action == 'open_dashboard' and window:
+        window.show()
+        window.restore()
+    elif action == 'pause_tracking':
+        is_tracking = False
+    elif action == 'toggle_meeting_mode':
+        manual_meeting_mode = not manual_meeting_mode
+    elif action == 'quit':
+        if window: window.destroy()
+        cleanup_and_exit()
+    return "OK"
 
 # Static Files
 @app.route('/')
@@ -2236,6 +2250,44 @@ def on_open_dashboard(icon, item):
         window.show()
         window.restore()
 
+def run_mac_tray_process():
+    import urllib.request
+    def on_action(icon, item):
+        action = item.text.lower().replace(' ', '_')
+        try: urllib.request.urlopen(f"http://127.0.0.1:5000/api/tray/{action}")
+        except: pass
+        if action == "quit": icon.stop()
+    
+    icon = pystray.Icon("Move-It")
+    icon.menu = pystray.Menu(
+        pystray.MenuItem("Open Dashboard", on_action),
+        pystray.MenuItem("Toggle Meeting Mode", on_action),
+        pystray.MenuItem("Pause Tracking", on_action),
+        pystray.MenuItem("Quit", on_action)
+    )
+    icon.icon = create_tray_image()
+    icon.title = "Move-It Tracker"
+    icon.run()
+
+def setup_tray():
+    if sys.platform == 'darwin':
+        import subprocess
+        subprocess.Popen([sys.executable, '--tray'])
+        return
+
+    global icon
+    icon = pystray.Icon("Move-It")
+    icon.menu = pystray.Menu(
+        pystray.MenuItem("Open Dashboard", on_open_dashboard),
+        pystray.MenuItem("Toggle Meeting Mode", on_toggle_meeting_mode),
+        pystray.MenuItem("Pause Tracking", on_pause_tracking),
+        pystray.MenuItem("Quit", on_quit)
+    )
+    icon.icon = create_tray_image()
+    icon.title = "Move-It Tracker"
+    # Run detached in a daemon thread so it doesn't block webview
+    icon.run_detached()
+
 def on_pause_tracking(icon, item):
     global is_tracking
     is_tracking = False
@@ -2254,18 +2306,7 @@ def on_toggle_meeting_mode(icon, item):
     status = "ON" if manual_meeting_mode else "OFF"
     print(f"Manual Meeting Mode: {status}")
 
-def setup_tray():
-    icon = pystray.Icon("Move-It")
-    icon.menu = pystray.Menu(
-        pystray.MenuItem("Open Dashboard", on_open_dashboard),
-        pystray.MenuItem("Toggle Meeting Mode", on_toggle_meeting_mode),
-        pystray.MenuItem("Pause Tracking", on_pause_tracking),
-        pystray.MenuItem("Quit", on_quit)
-    )
-    icon.icon = create_tray_image()
-    icon.title = "Move-It Tracker"
-    # Run detached in a daemon thread so it doesn't block webview
-    icon.run_detached()
+
 
 if __name__ == '__main__':
     # Run benchmark in background
