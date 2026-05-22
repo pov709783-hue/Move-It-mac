@@ -17,14 +17,23 @@ console.error = function(...args) { addLog('ERROR', ...args); origError.apply(co
 window.addEventListener('error', (e) => console.error("Uncaught Error:", e.message, e.filename, e.lineno));
 window.addEventListener('unhandledrejection', (e) => console.error("Unhandled Promise Rejection:", e.reason));
 
-function showLogsModal() {
+async function showLogsModal() {
     const modal = document.getElementById('logs-modal');
     const textarea = document.getElementById('logs-textarea');
     if (modal && textarea) {
-        textarea.value = window.appLogs.join('\n');
+        const frontendLogs = window.appLogs.join('\n');
+        textarea.value = "--- Frontend Logs ---\n" + frontendLogs + "\n\n--- Backend Logs ---\nLoading...";
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
         textarea.scrollTop = textarea.scrollHeight;
+        try {
+            const res = await fetch('/api/get_logs');
+            const data = await res.json();
+            textarea.value = "--- Frontend Logs ---\n" + frontendLogs + "\n\n--- Backend Logs ---\n" + data.logs;
+            textarea.scrollTop = textarea.scrollHeight;
+        } catch(e) {
+            textarea.value += "\nError loading backend logs: " + e;
+        }
     }
 }
 function copyLogsToClipboard() {
