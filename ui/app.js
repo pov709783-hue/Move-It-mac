@@ -1,5 +1,42 @@
 console.log("MOVE-IT: app.js loaded");
 
+// --- DEBUG LOGGER SYSTEM ---
+window.appLogs = [];
+function addLog(level, ...args) {
+    const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    const time = new Date().toLocaleTimeString();
+    window.appLogs.push(`[${time}] [${level}] ${msg}`);
+    if (window.appLogs.length > 500) window.appLogs.shift(); // keep last 500
+}
+const origLog = console.log;
+const origWarn = console.warn;
+const origError = console.error;
+console.log = function(...args) { addLog('INFO', ...args); origLog.apply(console, args); };
+console.warn = function(...args) { addLog('WARN', ...args); origWarn.apply(console, args); };
+console.error = function(...args) { addLog('ERROR', ...args); origError.apply(console, args); };
+window.addEventListener('error', (e) => console.error("Uncaught Error:", e.message, e.filename, e.lineno));
+window.addEventListener('unhandledrejection', (e) => console.error("Unhandled Promise Rejection:", e.reason));
+
+function showLogsModal() {
+    const modal = document.getElementById('logs-modal');
+    const textarea = document.getElementById('logs-textarea');
+    if (modal && textarea) {
+        textarea.value = window.appLogs.join('\n');
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        textarea.scrollTop = textarea.scrollHeight;
+    }
+}
+function copyLogsToClipboard() {
+    const textarea = document.getElementById('logs-textarea');
+    if (textarea) {
+        textarea.select();
+        document.execCommand('copy');
+        alert("Logs copied to clipboard!");
+    }
+}
+
+
 // Core App State
 let isTracking = false;
 let isMeetingMode = false;
@@ -1358,7 +1395,14 @@ function createYouTubePlayer(videoId, onReadyCb) {
                 }
             },
             onError: function(evt) {
-                console.error('[YT] Player error:', evt.data);
+                console.error('[YT] Player error code:', evt.data);
+                let reason = "Unknown error";
+                if (evt.data === 2) reason = "Invalid video ID";
+                if (evt.data === 5) reason = "HTML5 player error";
+                if (evt.data === 100) reason = "Video deleted or private";
+                if (evt.data === 101 || evt.data === 150) reason = "Copyright holder disabled embedding in third-party apps";
+                console.error(`[YT] ⚠️ Video playback failed: ${reason}`);
+                alert(`Cannot play this video: ${reason}.\n\nPlease try another video. Check the Logs button for details.`);
             }
         }
     });

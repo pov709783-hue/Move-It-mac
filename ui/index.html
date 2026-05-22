@@ -614,6 +614,20 @@
     <!-- MediaPipe Tasks Vision API (faster WASM runtime, replaces legacy @mediapipe/pose) -->
     <script type="module" src="mp_wasm_init.js"></script>
 
-    <script src="app.js?v=18"></script>
+    <!-- DEBUG LOGS MODAL -->
+    <button id="btn-show-logs" onclick="showLogsModal()" style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #333; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; z-index: 9999;">🐞 Logs</button>
+
+    <div id="logs-modal" class="song-modal hidden" style="z-index: 10000; display: none;">
+        <div class="song-modal-content glass-panel" style="max-width: 800px; width: 90%; max-height: 80vh; display: flex; flex-direction: column;">
+            <h2 style="margin-top: 0;">App Logs (Debug)</h2>
+            <textarea id="logs-textarea" readonly style="width: 100%; flex: 1; min-height: 300px; background: #000; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #333; border-radius: 4px; resize: none; margin-bottom: 15px;"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="copyLogsToClipboard()" style="flex: 1;">Copy Logs</button>
+                <button class="btn-secondary" onclick="document.getElementById('logs-modal').style.display='none'" style="flex: 1;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=19"></script>
 </body>
 </html>
