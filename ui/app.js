@@ -1377,7 +1377,8 @@ function createYouTubePlayer(videoId, onReadyCb) {
         modestbranding: 1,
         rel: 0,
         playsinline: 1,
-        fs: 0
+        fs: 0,
+        origin: window.location.origin
     };
     if (typeof window._selectedSong !== 'undefined' && window._selectedSong) {
         if (window._selectedSong.startSeconds) pVars.start = window._selectedSong.startSeconds;
