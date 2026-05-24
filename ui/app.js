@@ -1386,7 +1386,6 @@ function createYouTubePlayer(videoId, onReadyCb) {
     }
 
     ytPlayer = new YT.Player('dance-yt-player', {
-        host: 'https://www.youtube-nocookie.com',
         videoId: videoId,
         width: '100%',
         height: '100%',
