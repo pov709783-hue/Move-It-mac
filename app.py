@@ -2254,8 +2254,28 @@ def serve_static(filename):
     return response
 
 def start_server():
-    local_host = 'localhost' if sys.platform == 'win32' else '127.0.0.1'
-    app.run(host=local_host, port=5000, debug=False, use_reloader=False)
+    from werkzeug.serving import make_server
+    import threading
+    
+    # Run IPv4 localhost
+    try:
+        srv_v4 = make_server('127.0.0.1', 5000, app)
+        threading.Thread(target=srv_v4.serve_forever, daemon=True).start()
+        print("Server listening on 127.0.0.1:5000")
+    except Exception as e:
+        print(f"IPv4 bind failed: {e}")
+
+    # Run IPv6 localhost (Crucial for macOS WKWebView resolving 'localhost' to ::1)
+    try:
+        srv_v6 = make_server('::1', 5000, app)
+        threading.Thread(target=srv_v6.serve_forever, daemon=True).start()
+        print("Server listening on [::1]:5000")
+    except Exception as e:
+        print(f"IPv6 bind failed: {e}")
+    
+    # Keep the main thread alive since serve_forever is daemonized
+    while True:
+        time.sleep(1)
 
 def create_tray_image():
     # Simple icon: green square with white dot
@@ -2323,10 +2343,8 @@ if __name__ == '__main__':
 
     print("Move-It launching...")
     # Show the dashboard on launch. It hides to tray when user clicks "Start Tracking" or the X button.
-    # We must use 'localhost' on Windows so YouTube's iframe API allows VEVO embeds (it blocks 127.0.0.1).
-    # We must use '127.0.0.1' on macOS because 'localhost' resolves to IPv6 ::1, causing a white screen.
-    local_host = 'localhost' if sys.platform == 'win32' else '127.0.0.1'
-    window = webview.create_window('Move-It', f'http://{local_host}:5000', width=600, height=700, resizable=True, maximized=True)
+    # YouTube's iframe API strictly requires 'localhost' in the Referer header to allow VEVO videos.
+    window = webview.create_window('Move-It', 'http://localhost:5000', width=600, height=700, resizable=True, maximized=True)
     
     def on_closing():
         if window:
