@@ -2254,7 +2254,8 @@ def serve_static(filename):
     return response
 
 def start_server():
-    app.run(host='localhost', port=5000, debug=False, use_reloader=False)
+    local_host = 'localhost' if sys.platform == 'win32' else '127.0.0.1'
+    app.run(host=local_host, port=5000, debug=False, use_reloader=False)
 
 def create_tray_image():
     # Simple icon: green square with white dot
@@ -2322,8 +2323,10 @@ if __name__ == '__main__':
 
     print("Move-It launching...")
     # Show the dashboard on launch. It hides to tray when user clicks "Start Tracking" or the X button.
-    # YouTube's iframe API requires 'localhost' (blocks raw 127.0.0.1 for copyrighted VEVO videos).
-    window = webview.create_window('Move-It', 'http://localhost:5000', width=600, height=700, resizable=True, maximized=True)
+    # We must use 'localhost' on Windows so YouTube's iframe API allows VEVO embeds (it blocks 127.0.0.1).
+    # We must use '127.0.0.1' on macOS because 'localhost' resolves to IPv6 ::1, causing a white screen.
+    local_host = 'localhost' if sys.platform == 'win32' else '127.0.0.1'
+    window = webview.create_window('Move-It', f'http://{local_host}:5000', width=600, height=700, resizable=True, maximized=True)
     
     def on_closing():
         if window:
