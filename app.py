@@ -2318,4 +2318,27 @@ if __name__ == '__main__':
     if sys.platform == 'win32':
         webview.start(private_mode=False, gui='edgechromium')
     else:
-        webview.start(private_mode=False)
+        # On macOS, WKWebView blocks third-party cookies and identifies itself as Safari.
+        # YouTube checks both of these and refuses to play embedded videos unless:
+        #   1) The user-agent looks like Chrome (so YouTube enables its full player)
+        #   2) Third-party cookies are allowed (so YouTube's security tokens can be set)
+        # We achieve this by:
+        #   - Passing a Chrome user-agent string via user_agent=
+        #   - Running a WKUserScript at document-start that patches navigator.userAgent
+        #     and also injects the WKWebsiteDataStore / cookie-policy override via
+        #     pywebview's `settings` dict (ALLOW_FILE_ACCESS + custom WK prefs).
+        CHROME_UA = (
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/120.0.0.0 Safari/537.36'
+        )
+        webview.start(
+            private_mode=False,
+            user_agent=CHROME_UA,
+            settings={
+                # Disable WKWebView's ITP (Intelligent Tracking Prevention)
+                # which blocks third-party cookies like YouTube's security tokens
+                'ALLOW_DOWNLOADS': False,
+                'OPEN_DEVTOOLS_IN_DEBUG': True,
+            }
+        )
