@@ -2360,3 +2360,11 @@ setTimeout(checkForUpdates, 3000);
 
 // Run license check immediately on boot
 checkLicenseStatus();
+
+// Hide logs button on Windows
+document.addEventListener("DOMContentLoaded", () => {
+    if (navigator.userAgent.indexOf("Win") !== -1) {
+        const logsBtn = document.getElementById('btn-show-logs');
+        if (logsBtn) logsBtn.style.display = 'none';
+    }
+});
