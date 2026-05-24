@@ -127,6 +127,7 @@ is_locked = False
 is_dancing = False
 is_calibrating = False
 active_time = 0
+has_shown_tray_notification = False
 
 last_activity_time = time.time()
 last_camera_presence_time = 0
@@ -138,6 +139,19 @@ calibration_status = {"status": "calibrating", "color": "red", "message": "Analy
 latest_frame = None
 latest_pose = None
 current_score = 0
+icon = None
+
+def show_tray_notification_once():
+    global has_shown_tray_notification, icon
+    if sys.platform == 'win32' and not has_shown_tray_notification and icon is not None:
+        try:
+            icon.notify(
+                "Move-It is running in the background. Click the tray icon to open it.",
+                title="Move-It"
+            )
+            has_shown_tray_notification = True
+        except Exception as e:
+            print(f"Failed to show tray notification: {e}")
 window = None
 ref_frame_index = 0
 dance_start_time = 0
@@ -1142,6 +1156,7 @@ def api_start_tracking():
     print(f"Tracking started. Limit set to {current_limit_seconds} seconds.")
     if window:
         window.minimize()  # Hide instead of minimize since we use system tray
+        show_tray_notification_once()
     return jsonify({"status": "ok"})
 
 @app.route('/api/update_limit', methods=['POST'])
@@ -2312,6 +2327,7 @@ if __name__ == '__main__':
     def on_closing():
         if window:
             window.minimize()
+            show_tray_notification_once()
         return False
         
     window.events.closing += on_closing
