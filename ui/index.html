@@ -11,10 +11,13 @@
          may fall back to a restricted player mode that blocks embedded video playback. -->
     <script>
         (function() {
-            var chromeUA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-            try {
-                Object.defineProperty(navigator, 'userAgent', { get: function() { return chromeUA; } });
-            } catch(e) {}
+            // Only apply this override on Mac to avoid breaking Windows WebView2
+            if (navigator.userAgent.indexOf('Mac OS X') !== -1 || navigator.userAgent.indexOf('Macintosh') !== -1) {
+                var chromeUA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+                try {
+                    Object.defineProperty(navigator, 'userAgent', { get: function() { return chromeUA; } });
+                } catch(e) {}
+            }
         })();
     </script>
     <script src="https://www.youtube.com/iframe_api"></script>

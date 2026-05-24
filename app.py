@@ -2322,7 +2322,7 @@ if __name__ == '__main__':
 
     print("Move-It launching...")
     # Show the dashboard on launch. It hides to tray when user clicks "Start Tracking" or the X button.
-    window = webview.create_window('Move-It', 'http://127.0.0.1:5000', width=600, height=700, resizable=True)
+    window = webview.create_window('Move-It', 'http://127.0.0.1:5000', width=600, height=700, resizable=True, maximized=True)
     
     def on_closing():
         if window:
