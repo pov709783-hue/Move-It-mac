@@ -107,8 +107,40 @@ jobs:
         # Store credentials securely for notarytool
         xcrun notarytool store-credentials "notary-creds" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_PASSWORD"
         
-        # Submit for notarization and wait for the result
-        xcrun notarytool submit dist/Move-It-macOS.dmg --keychain-profile "notary-creds" --wait
+        # Submit for notarization (capture the submission ID)
+        SUBMIT_OUTPUT=$(xcrun notarytool submit dist/Move-It-macOS.dmg --keychain-profile "notary-creds" 2>&1)
+        echo "$SUBMIT_OUTPUT"
+        SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
+        echo "Submission ID: $SUBMISSION_ID"
+        
+        # Wait for notarization with retry logic (handles network drops)
+        MAX_RETRIES=5
+        for i in $(seq 1 $MAX_RETRIES); do
+          echo "Attempt $i of $MAX_RETRIES to check notarization status..."
+          if xcrun notarytool wait "$SUBMISSION_ID" --keychain-profile "notary-creds" --timeout 15m 2>&1; then
+            echo "Notarization check completed!"
+            break
+          else
+            echo "Attempt $i failed (likely network issue). Waiting 30 seconds before retry..."
+            if [ "$i" -eq "$MAX_RETRIES" ]; then
+              echo "All retries exhausted. Checking final status..."
+              xcrun notarytool info "$SUBMISSION_ID" --keychain-profile "notary-creds"
+              exit 1
+            fi
+            sleep 30
+          fi
+        done
+        
+        # Verify the notarization was accepted
+        STATUS=$(xcrun notarytool info "$SUBMISSION_ID" --keychain-profile "notary-creds" 2>&1)
+        echo "$STATUS"
+        if echo "$STATUS" | grep -q "status: Accepted"; then
+          echo "Notarization succeeded!"
+        else
+          echo "Notarization failed. Fetching log..."
+          xcrun notarytool log "$SUBMISSION_ID" --keychain-profile "notary-creds"
+          exit 1
+        fi
 
     - name: Staple Ticket to DMG
       run: |
