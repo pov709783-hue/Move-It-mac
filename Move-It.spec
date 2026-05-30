@@ -1,13 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-import sys
 from PyInstaller.utils.hooks import collect_all
 
 datas = [('ui', 'ui'), ('Images', 'Images'), ('*.json', '.'), ('pose_landmarker_lite.task', '.'), ('pose_landmarker_heavy.task', '.'), ('pose_landmarker_full.task', '.')]
 binaries = []
-if sys.platform == 'win32':
-    binaries = [('.venv\\\\Library\\\\bin\\\\*.dll', '.')]
-hiddenimports = []
+hiddenimports = ['pystray._win32']
 tmp_ret = collect_all('mediapipe')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+tmp_ret = collect_all('webview')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
@@ -54,19 +53,19 @@ coll = COLLECT(
     name='Move-It',
 )
 
-if sys.platform == 'darwin':
-    app = BUNDLE(
-        coll,
-        name='Move-It.app',
-        icon='icon.ico',
-        bundle_identifier='com.moveit.app',
-        info_plist={
-            'NSCameraUsageDescription': 'Move-It requires camera access to track your dance movements.',
-            'NSMicrophoneUsageDescription': 'Move-It requires microphone access for audio functionality.',
-            'NSHighResolutionCapable': 'True',
-            'NSAppTransportSecurity': {
-                'NSAllowsLocalNetworking': True,
-                'NSAllowsArbitraryLoads': True,
-            },
-        },
-    )
+app = BUNDLE(
+    coll,
+    name='Move-It.app',
+    icon='icon.ico',
+    bundle_identifier='com.ali.moveit',
+    info_plist={
+        'CFBundleName': 'Move-It',
+        'CFBundleDisplayName': 'Move-It',
+        'CFBundleExecutable': 'Move-It',
+        'CFBundlePackageType': 'APPL',
+        'CFBundleShortVersionString': '1.0.0',
+        'LSMinimumSystemVersion': '10.13.0',
+        'NSCameraUsageDescription': 'This app requires camera access for pose detection.',
+        'NSMicrophoneUsageDescription': 'This app requires microphone access for audio functionality.'
+    },
+)

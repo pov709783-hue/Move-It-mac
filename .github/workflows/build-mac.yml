@@ -80,8 +80,12 @@ jobs:
         
         echo "Found identity: $CERT_IDENTITY"
         
-        # Sign all libraries
-        find dist/Move-It.app -type f \( -name "*.dylib" -o -name "*.so" \) -exec codesign --force --sign "$CERT_IDENTITY" --options runtime --entitlements entitlements.plist {} \;
+        # Sign all Mach-O binaries (catches .so, .dylib, .bundle, and raw executables inside MediaPipe)
+        find dist/Move-It.app -type f | while read -r file; do
+          if file "$file" | grep -q "Mach-O"; then
+            codesign --force --sign "$CERT_IDENTITY" --options runtime --entitlements entitlements.plist "$file" || true
+          fi
+        done
         
         # Sign the main app bundle
         codesign --deep --force --sign "$CERT_IDENTITY" --options runtime --entitlements entitlements.plist dist/Move-It.app
