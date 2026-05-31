@@ -1,11 +1,13 @@
-name: Build macOS App (Apple Silicon)
+name: Build macOS App (Intel)
 
 on:
+  push:
+    branches: [ "main", "master" ]
   workflow_dispatch: 
 
 jobs:
-  build-macos:
-    runs-on: macos-latest
+  build-macos-intel:
+    runs-on: macos-13
 
     steps:
     - name: Checkout repository
@@ -159,6 +161,7 @@ jobs:
         hdiutil detach /Volumes/Move-It
 
     - name: Notarize DMG
+      if: false
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -207,11 +210,12 @@ jobs:
         fi
 
     - name: Staple Ticket to DMG
+      if: false
       run: |
         xcrun stapler staple dist/Move-It-macOS.dmg
         
     - name: Upload DMG Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Move-It-macOS-Build
+        name: Move-It-macOS-Intel-Build
         path: dist/Move-It-macOS.dmg
