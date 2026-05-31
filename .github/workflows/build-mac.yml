@@ -161,7 +161,6 @@ jobs:
         hdiutil detach /Volumes/Move-It
 
     - name: Notarize DMG
-      if: false
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -210,7 +209,6 @@ jobs:
         fi
 
     - name: Staple Ticket to DMG
-      if: false
       run: |
         xcrun stapler staple dist/Move-It-macOS.dmg
         
