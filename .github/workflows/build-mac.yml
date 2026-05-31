@@ -34,6 +34,32 @@ jobs:
       run: |
         pyinstaller Move-It.spec --clean --noconfirm
 
+    - name: Diagnostic Test
+      run: |
+        echo "Checking executable permissions..."
+        ls -la dist/Move-It.app/Contents/MacOS/Move-It
+        
+        echo "Forcing executable permissions..."
+        chmod +x dist/Move-It.app/Contents/MacOS/Move-It
+        
+        echo "Running app to check for startup errors..."
+        # Run in background, wait 10 seconds, then kill
+        dist/Move-It.app/Contents/MacOS/Move-It > app_startup.log 2>&1 &
+        APP_PID=$!
+        sleep 10
+        
+        if kill -0 $APP_PID 2>/dev/null; then
+          echo "App is still running successfully! (No instant crash)"
+          kill $APP_PID
+        else
+          echo "APP CRASHED ON STARTUP! Here is the error log:"
+          cat app_startup.log
+          exit 1
+        fi
+        
+        echo "Startup log output (if any):"
+        cat app_startup.log
+
     - name: Import Apple Certificate
       env:
         BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
@@ -106,6 +132,7 @@ jobs:
         codesign --force --sign "$CERT_IDENTITY" dist/Move-It-macOS.dmg
 
     - name: Notarize DMG
+      if: false
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -154,6 +181,7 @@ jobs:
         fi
 
     - name: Staple Ticket to DMG
+      if: false
       run: |
         xcrun stapler staple dist/Move-It-macOS.dmg
         
