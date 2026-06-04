@@ -53,15 +53,17 @@ jobs:
         
         if kill -0 $APP_PID 2>/dev/null; then
           echo "App is still running successfully! (No instant crash)"
-          kill $APP_PID
+          kill $APP_PID || true
+          wait $APP_PID 2>/dev/null || true
         else
           echo "APP CRASHED ON STARTUP! Here is the error log:"
           cat app_startup.log
           exit 1
         fi
         
+        sleep 1
         echo "Startup log output (if any):"
-        cat app_startup.log
+        cat app_startup.log || true
 
     - name: Import Apple Certificate
       env:
