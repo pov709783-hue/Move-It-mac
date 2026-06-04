@@ -1,6 +1,8 @@
 name: Build macOS App (Apple Silicon)
 
 on:
+  push:
+    branches: [ "main", "master" ]
   workflow_dispatch: 
 
 jobs:
@@ -120,64 +122,29 @@ jobs:
         # Verify
         codesign -dv --verbose=4 dist/Move-It.app
 
-    - name: Create DMG
-      run: |
-        mkdir -p dist/dmg
-        ditto dist/Move-It.app dist/dmg/Move-It.app
-        ln -s /Applications dist/dmg/Applications
-        hdiutil create -volname "Move-It" -srcfolder dist/dmg -ov -format UDZO dist/Move-It-macOS.dmg
-
-    - name: Code Sign DMG
-      run: |
-        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | sed -n 's/.*"\(.*\)".*/\1/p')
-        codesign --force --sign "$CERT_IDENTITY" dist/Move-It-macOS.dmg
-
-    - name: Verify DMG App
-      run: |
-        echo "Mounting final DMG..."
-        hdiutil attach dist/Move-It-macOS.dmg
-        
-        echo "Verifying code signature inside DMG..."
-        codesign --verify --deep --verbose /Volumes/Move-It/Move-It.app
-        
-        echo "Running app from mounted DMG..."
-        /Volumes/Move-It/Move-It.app/Contents/MacOS/Move-It > dmg_startup.log 2>&1 &
-        APP_PID=$!
-        sleep 10
-        
-        if kill -0 $APP_PID 2>/dev/null; then
-          echo "App inside DMG is running successfully!"
-          kill $APP_PID
-        else
-          echo "App inside DMG crashed! Log:"
-          cat dmg_startup.log
-          hdiutil detach /Volumes/Move-It
-          exit 1
-        fi
-        
-        echo "Detaching DMG..."
-        hdiutil detach /Volumes/Move-It
-
-    - name: Notarize DMG
+    - name: Notarize App via ZIP
       env:
         APPLE_ID: ${{ secrets.APPLE_ID }}
         APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         APPLE_PASSWORD: ${{ secrets.APPLE_NOTARIZATION_PASSWORD }}
       run: |
+        # Create a ZIP of the .app for notarization submission
+        echo "Creating ZIP of Move-It.app for notarization..."
+        ditto -c -k --keepParent dist/Move-It.app dist/Move-It-notarize.zip
+        
         # Store credentials securely for notarytool
         xcrun notarytool store-credentials "notary-creds" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_PASSWORD"
         
-        # Submit for notarization (capture the submission ID)
-        SUBMIT_OUTPUT=$(xcrun notarytool submit dist/Move-It-macOS.dmg --keychain-profile "notary-creds" 2>&1)
+        # Submit ZIP for notarization
+        SUBMIT_OUTPUT=$(xcrun notarytool submit dist/Move-It-notarize.zip --keychain-profile "notary-creds" 2>&1)
         echo "$SUBMIT_OUTPUT"
         SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
         echo "Submission ID: $SUBMISSION_ID"
         
-        # Wait for notarization with retry logic (handles network drops and keychain locks)
+        # Wait for notarization with retry logic
         MAX_RETRIES=5
         for i in $(seq 1 $MAX_RETRIES); do
           echo "Attempt $i of $MAX_RETRIES to check notarization status..."
-          # Re-unlock keychain before each attempt (prevents auto-lock timeout)
           security unlock-keychain -p "temp_runner_password" build.keychain
           if xcrun notarytool wait "$SUBMISSION_ID" --keychain-profile "notary-creds" --timeout 30m 2>&1; then
             echo "Notarization check completed!"
@@ -206,9 +173,54 @@ jobs:
           exit 1
         fi
 
-    - name: Staple Ticket to DMG
+    - name: Staple Ticket to App
       run: |
-        xcrun stapler staple dist/Move-It-macOS.dmg
+        echo "Stapling notarization ticket directly to .app bundle..."
+        xcrun stapler staple dist/Move-It.app
+        
+        echo "Verifying staple..."
+        xcrun stapler validate dist/Move-It.app
+
+    - name: Create DMG
+      run: |
+        mkdir -p dist/dmg
+        ditto dist/Move-It.app dist/dmg/Move-It.app
+        ln -s /Applications dist/dmg/Applications
+        hdiutil create -volname "Move-It" -srcfolder dist/dmg -ov -format UDZO dist/Move-It-macOS.dmg
+
+    - name: Code Sign DMG
+      run: |
+        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | sed -n 's/.*"\(.*\)".*/\1/p')
+        codesign --force --sign "$CERT_IDENTITY" dist/Move-It-macOS.dmg
+
+    - name: Verify DMG App
+      run: |
+        echo "Mounting final DMG..."
+        hdiutil attach dist/Move-It-macOS.dmg
+        
+        echo "Verifying code signature inside DMG..."
+        codesign --verify --deep --verbose /Volumes/Move-It/Move-It.app
+        
+        echo "Checking notarization staple inside DMG..."
+        xcrun stapler validate /Volumes/Move-It/Move-It.app
+        
+        echo "Running app from mounted DMG..."
+        /Volumes/Move-It/Move-It.app/Contents/MacOS/Move-It > dmg_startup.log 2>&1 &
+        APP_PID=$!
+        sleep 10
+        
+        if kill -0 $APP_PID 2>/dev/null; then
+          echo "App inside DMG is running successfully!"
+          kill $APP_PID
+        else
+          echo "App inside DMG crashed! Log:"
+          cat dmg_startup.log
+          hdiutil detach /Volumes/Move-It
+          exit 1
+        fi
+        
+        echo "Detaching DMG..."
+        hdiutil detach /Volumes/Move-It
         
     - name: Upload DMG Artifact
       uses: actions/upload-artifact@v4
