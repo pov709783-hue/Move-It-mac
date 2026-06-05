@@ -83,3 +83,8 @@ xref-Move-It.html
 # Local config
 lemon api keys.txt
 links_mdp.txt
+
+# Local credentials and build scripts
+credentials.sh
+
+
